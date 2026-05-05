@@ -26,6 +26,7 @@ export async function updateSighting(
   if (error) return 'Failed to update sighting.'
 
   revalidatePath('/dashboard/sightings')
+  revalidatePath('/dashboard')
   return null
 }
 
@@ -34,14 +35,14 @@ export async function deleteSighting(id: string): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 'Not authenticated.'
 
+  // Use the same RPC as mobile — handles soft delete + life_list counter update
   const { error } = await supabase
-    .from('sightings')
-    .update({ deleted_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('user_id', user.id)
+    .rpc('soft_delete_sighting', { p_sighting_id: id })
 
   if (error) return 'Failed to delete sighting.'
 
   revalidatePath('/dashboard/sightings')
+  revalidatePath('/dashboard/lifelist')
+  revalidatePath('/dashboard')
   return null
 }
