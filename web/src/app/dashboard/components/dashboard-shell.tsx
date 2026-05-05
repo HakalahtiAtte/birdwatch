@@ -9,6 +9,7 @@ import { signOut } from '@/app/(auth)/actions'
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Yhteenveto', icon: '📊' },
   { href: '/dashboard/sightings', label: 'Havainnot', icon: '🐦' },
+  { href: '/dashboard/lifelist', label: 'Lajilista', icon: '📋' },
   { href: '/dashboard/map', label: 'Kartta', icon: '🗺️' },
   { href: '/dashboard/gallery', label: 'Galleria', icon: '📷' },
   { href: '/dashboard/alerts', label: 'Hälytykset', icon: '🔔' },
