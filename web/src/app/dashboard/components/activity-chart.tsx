@@ -51,7 +51,7 @@ export function ActivityChart({ data }: { data: ChartPoint[] }) {
               month: 'short',
             })
           }
-          formatter={(value: number) => [value, 'sightings']}
+          formatter={(value) => [value, 'sightings']}
         />
         <Area
           type="monotone"
