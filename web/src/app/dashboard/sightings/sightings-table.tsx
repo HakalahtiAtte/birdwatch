@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import type { SightingWithSpecies } from '@/types/database'
+import { EditModal } from './edit-modal'
 
 type SortKey = 'sighted_at' | 'common_name' | 'count'
 type SortDir = 'asc' | 'desc'
@@ -10,6 +11,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('sighted_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [editing, setEditing] = useState<SightingWithSpecies | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase()
@@ -53,6 +55,9 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
 
   return (
     <div>
+      {editing && (
+        <EditModal sighting={editing} onClose={() => setEditing(null)} />
+      )}
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <input
           type="search"
@@ -90,6 +95,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
                   Lkm {sortIcon('count')}
                 </Th>
                 <Th>Julkinen</Th>
+                <Th><span className="sr-only">Muokkaa</span></Th>
               </tr>
             </thead>
             <tbody>
@@ -129,6 +135,15 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
                         }`}
                         aria-label={s.is_public ? 'Julkinen' : 'Yksityinen'}
                       />
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        onClick={() => setEditing(s)}
+                        className="text-xs font-medium text-green-600 hover:text-green-800 hover:underline"
+                        aria-label={`Muokkaa havaintoa ${s.species?.common_name ?? ''}`}
+                      >
+                        Muokkaa
+                      </button>
                     </td>
                   </tr>
                 ))
