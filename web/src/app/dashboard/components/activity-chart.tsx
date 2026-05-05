@@ -45,8 +45,8 @@ export function ActivityChart({ data }: { data: ChartPoint[] }) {
             borderRadius: 8,
             fontSize: 12,
           }}
-          labelFormatter={(v: string) =>
-            new Date(v).toLocaleDateString(undefined, {
+          labelFormatter={(v) =>
+            new Date(String(v)).toLocaleDateString(undefined, {
               day: 'numeric',
               month: 'short',
             })
