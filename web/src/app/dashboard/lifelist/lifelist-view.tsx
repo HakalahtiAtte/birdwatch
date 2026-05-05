@@ -80,7 +80,7 @@ export function LifeListView({ entries }: { entries: LifeListEntry[] }) {
                   <p className="text-xs text-gray-400">{entry.total_sightings === 1 ? 'havainto' : 'havaintoa'}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 font-medium">Ensikerrat</p>
+                  <p className="text-xs text-gray-500 font-medium">Ensikerta</p>
                   <p className="text-xs text-gray-400">{formatDate(entry.first_seen_at)}</p>
                 </div>
               </div>

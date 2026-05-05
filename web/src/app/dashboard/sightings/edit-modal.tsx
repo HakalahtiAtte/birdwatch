@@ -19,9 +19,12 @@ export function EditModal({
   const [locationName, setLocationName] = useState(sighting.location_name ?? '')
   const [notes, setNotes] = useState(sighting.notes ?? '')
   const [isPublic, setIsPublic] = useState(sighting.is_public)
-  const [sightedAt, setSightedAt] = useState(
-    sighting.sighted_at.slice(0, 16) // "YYYY-MM-DDTHH:MM" for datetime-local
-  )
+  const [sightedAt, setSightedAt] = useState(() => {
+    // datetime-local needs local time, but sighted_at is UTC — adjust for offset
+    const d = new Date(sighting.sighted_at)
+    const offset = d.getTimezoneOffset() * 60000
+    return new Date(d.getTime() - offset).toISOString().slice(0, 16)
+  })
 
   const handleSave = () => {
     const parsedCount = parseInt(count, 10)
