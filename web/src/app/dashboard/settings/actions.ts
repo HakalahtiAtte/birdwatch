@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { redirect } from 'next/navigation'
 
 export async function deleteAccount(): Promise<string | null> {
@@ -16,6 +17,16 @@ export async function deleteAccount(): Promise<string | null> {
     if (error) return `Failed to delete data from ${table}.`
   }
 
+  // Delete the auth user itself using the service role key (server-only)
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (serviceRoleKey) {
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      serviceRoleKey
+    )
+    await admin.auth.admin.deleteUser(user.id)
+  }
+
   await supabase.auth.signOut()
-  redirect('/login?notice=Your+data+has+been+deleted.')
+  redirect('/login?notice=Tilisi+on+poistettu.')
 }

@@ -1,6 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
+function sanitizeCsv(value: unknown): string {
+  const str = String(value ?? '').replace(/"/g, '""')
+  // Prefix formula-trigger characters to prevent spreadsheet injection
+  if (str.length > 0 && '=+-@\t\r'.includes(str[0])) {
+    return `"'${str}"`
+  }
+  return `"${str}"`
+}
+
 export async function GET() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -42,12 +51,12 @@ export async function GET() {
     s.location_name ?? '',
     s.latitude ?? '',
     s.longitude ?? '',
-    (s.notes ?? '').replace(/"/g, '""'),
+    s.notes ?? '',
     s.is_public ? 'yes' : 'no',
   ])
 
   const csv = [headers, ...csvRows]
-    .map((row) => row.map((cell) => `"${cell}"`).join(','))
+    .map((row) => row.map((cell) => sanitizeCsv(cell)).join(','))
     .join('\n')
 
   return new NextResponse(csv, {
