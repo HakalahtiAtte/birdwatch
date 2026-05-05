@@ -13,7 +13,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "fi.birdwatch.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Birdwatch käyttää sijaintiasi havainnon tallentamiseen.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Birdwatch käyttää sijaintiasi havainnon tallentamiseen.",
+        "NSCameraUsageDescription": "Birdwatch käyttää kameraasi havaintokuvien ottamiseen.",
+        "NSPhotoLibraryUsageDescription": "Birdwatch käyttää kuvakirjastoasi havaintokuvien valitsemiseen."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -21,15 +28,47 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "fi.birdwatch.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+        }
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "scheme": "birdwatch",
     "web": {
-       "favicon": "./assets/favicon.png",
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Birdwatch käyttää sijaintiasi havainnon tallentamiseen."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Birdwatch käyttää kuvakirjastoasi havaintokuvien valitsemiseen.",
+          "cameraPermission": "Birdwatch käyttää kameraasi havaintokuvien ottamiseen."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#16a34a"
+        }
+      ]
     ]
   }
 }
