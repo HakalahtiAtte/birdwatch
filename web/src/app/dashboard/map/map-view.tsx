@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css'
 import { useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
-import type { SightingWithSpecies } from '../../../../shared/types/database'
+import type { SightingWithSpecies } from '@/types/database'
 
 // Leaflet's default marker icons break under webpack — replace with an emoji DivIcon
 const birdIcon = () =>

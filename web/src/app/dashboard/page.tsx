@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ActivityChart } from './components/activity-chart'
-import type { SightingWithSpecies } from '../../../shared/types/database'
+import type { SightingWithSpecies } from '@/types/database'
 
 export default async function DashboardPage() {
   const supabase = await createClient()

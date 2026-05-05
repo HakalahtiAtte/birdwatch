@@ -1,7 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import type { SightingWithSpecies } from '../../../../shared/types/database'
+import type { SightingWithSpecies } from '@/types/database'
 
 const MapView = dynamic(
   () => import('./map-view').then((m) => m.MapView),

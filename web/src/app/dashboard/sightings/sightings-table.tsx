@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import type { SightingWithSpecies } from '../../../../shared/types/database'
+import type { SightingWithSpecies } from '@/types/database'
 
 type SortKey = 'sighted_at' | 'common_name' | 'count'
 type SortDir = 'asc' | 'desc'

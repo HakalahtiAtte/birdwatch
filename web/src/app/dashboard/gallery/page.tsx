@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import type { Photo } from '../../../../shared/types/database'
+import type { Photo } from '@/types/database'
 
 export default async function GalleryPage() {
   const supabase = await createClient()

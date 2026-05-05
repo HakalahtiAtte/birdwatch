@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { addAlert, deleteAlert } from './actions'
-import type { SpeciesAlert, Species } from '../../../../shared/types/database'
+import type { SpeciesAlert, Species } from '@/types/database'
 
 type AlertWithSpecies = SpeciesAlert & { species: Species | null }
 

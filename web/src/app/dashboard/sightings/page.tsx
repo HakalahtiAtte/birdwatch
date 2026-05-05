@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { SightingsTable } from './sightings-table'
-import type { SightingWithSpecies } from '../../../../shared/types/database'
+import type { SightingWithSpecies } from '@/types/database'
 
 export default async function SightingsPage() {
   const supabase = await createClient()
