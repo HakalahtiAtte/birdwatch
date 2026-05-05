@@ -1,11 +1,20 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { login } from '../actions'
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [error, action, pending] = useActionState(login, null)
   const searchParams = useSearchParams()
   const notice = searchParams.get('notice')
