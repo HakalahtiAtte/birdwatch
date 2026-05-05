@@ -1,20 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import dynamic from 'next/dynamic'
+import { MapLoader } from './map-loader'
 import type { SightingWithSpecies } from '../../../../shared/types/database'
-
-// Leaflet uses browser APIs — must be loaded client-side only
-const MapView = dynamic(
-  () => import('./map-view').then((m) => m.MapView),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full text-sm text-gray-400">
-        Ladataan karttaa…
-      </div>
-    ),
-  }
-)
 
 export default async function MapPage() {
   const supabase = await createClient()
@@ -50,7 +37,7 @@ export default async function MapPage() {
             </div>
           </div>
         ) : (
-          <MapView sightings={sightings} />
+          <MapLoader sightings={sightings} />
         )}
       </div>
     </div>
