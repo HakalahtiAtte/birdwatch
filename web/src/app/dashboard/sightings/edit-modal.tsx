@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { updateSighting, deleteSighting } from './actions'
+import { createClient } from '@/lib/supabase/client'
 import type { SightingWithSpecies } from '@/types/database'
 
 export function EditModal({
@@ -14,6 +15,18 @@ export function EditModal({
   const [isPending, startTransition] = useTransition()
   const [confirming, setConfirming] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
+
+  useEffect(() => {
+    if (!sighting.photos?.length) return
+    const supabase = createClient()
+    Promise.all(
+      sighting.photos.map((p) =>
+        supabase.storage.from('photos').createSignedUrl(p.storage_path, 3600)
+          .then(({ data }) => data?.signedUrl ?? null)
+      )
+    ).then((urls) => setPhotoUrls(urls.filter(Boolean) as string[]))
+  }, [sighting.photos])
 
   const [count, setCount] = useState(String(sighting.count))
   const [locationName, setLocationName] = useState(sighting.location_name ?? '')
@@ -168,6 +181,24 @@ export function EditModal({
             />
             <span className="text-sm text-gray-700">Julkinen havainto</span>
           </label>
+
+          {photoUrls.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Kuvat ({photoUrls.length})
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {photoUrls.map((url, i) => (
+                  <img
+                    key={i}
+                    src={url}
+                    alt={`Havainnon kuva ${i + 1}`}
+                    className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-gray-200"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}

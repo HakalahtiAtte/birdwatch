@@ -6,9 +6,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Image,
+  FlatList,
 } from 'react-native'
 import { useLocalSearchParams, router, useFocusEffect } from 'expo-router'
 import { useState, useCallback } from 'react'
+import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { SightingWithSpecies } from '../../../shared/types/database'
@@ -19,31 +22,125 @@ export default function SightingDetailScreen() {
   const [sighting, setSighting] = useState<SightingWithSpecies | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [photoUrls, setPhotoUrls] = useState<{ id: string; url: string }[]>([])
+
+  const fetchSighting = useCallback(async () => {
+    if (!id || !user) return
+    setError(null)
+
+    const { data, error: fetchError } = await supabase
+      .from('sightings')
+      .select('*, species(*), photos(*)')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .is('deleted_at', null)
+      .single()
+
+    if (fetchError || !data) {
+      setError('Havaintoa ei löydy.')
+      return
+    }
+
+    setSighting(data as SightingWithSpecies)
+
+    // Generate signed URLs for each photo
+    const urls = await Promise.all(
+      (data.photos ?? []).map(async (photo: { id: string; storage_path: string }) => {
+        const { data: signed } = await supabase.storage
+          .from('photos')
+          .createSignedUrl(photo.storage_path, 3600)
+        return { id: photo.id, url: signed?.signedUrl ?? '' }
+      })
+    )
+    setPhotoUrls(urls.filter(p => p.url))
+  }, [id, user])
 
   useFocusEffect(
     useCallback(() => {
-      if (!id || !user) return
       setLoading(true)
-      setError(null)
-
-      supabase
-        .from('sightings')
-        .select('*, species(*), photos(*)')
-        .eq('id', id)
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .single()
-        .then(({ data, error: fetchError }) => {
-          if (fetchError || !data) {
-            setError('Havaintoa ei löydy.')
-          } else {
-            setSighting(data as SightingWithSpecies)
-          }
-          setLoading(false)
-        })
-    }, [id, user])
+      fetchSighting().finally(() => setLoading(false))
+    }, [fetchSighting])
   )
+
+  const uploadAsset = async (asset: ImagePicker.ImagePickerAsset) => {
+    const ext = asset.uri.split('.').pop()?.split('?')[0] ?? 'jpg'
+    const fileName = `${Date.now()}.${ext}`
+    const storagePath = `${user!.id}/${id}/${fileName}`
+    const mimeType = asset.mimeType ?? 'image/jpeg'
+
+    setUploading(true)
+
+    const arrayBuffer = await fetch(asset.uri).then(r => r.arrayBuffer())
+
+    const { error: uploadError } = await supabase.storage
+      .from('photos')
+      .upload(storagePath, arrayBuffer, { contentType: mimeType })
+
+    if (uploadError) {
+      setUploading(false)
+      Alert.alert('Virhe', 'Kuvan lataaminen epäonnistui. Yritä uudelleen.')
+      return
+    }
+
+    const { error: dbError } = await supabase.from('photos').insert({
+      sighting_id: id,
+      user_id: user!.id,
+      storage_path: storagePath,
+      mime_type: mimeType,
+      width_px: asset.width ?? null,
+      height_px: asset.height ?? null,
+      file_size_bytes: asset.fileSize ?? null,
+    })
+
+    if (dbError) {
+      setUploading(false)
+      Alert.alert('Virhe', 'Kuvan tietojen tallentaminen epäonnistui.')
+      return
+    }
+
+    setUploading(false)
+    fetchSighting()
+  }
+
+  const handleAddPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Lupa evätty', 'Kuvakirjastolupa tarvitaan kuvan lisäämiseen.')
+      return
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: false,
+      quality: 0.8,
+    })
+
+    if (result.canceled || !result.assets[0]) return
+    await uploadAsset(result.assets[0])
+  }
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync()
+    if (status !== 'granted') {
+      Alert.alert('Lupa evätty', 'Kameralupa tarvitaan kuvan ottamiseen.')
+      return
+    }
+
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.8 })
+
+    if (result.canceled || !result.assets[0]) return
+    await uploadAsset(result.assets[0])
+  }
+
+  const handlePhotoOptions = () => {
+    Alert.alert('Lisää kuva', undefined, [
+      { text: 'Ota kuva', onPress: handleTakePhoto },
+      { text: 'Valitse kirjastosta', onPress: handleAddPhoto },
+      { text: 'Peruuta', style: 'cancel' },
+    ])
+  }
 
   const handleDelete = () => {
     Alert.alert(
@@ -157,11 +254,55 @@ export default function SightingDetailScreen() {
           </View>
         ) : null}
 
-        {sighting.photos.length > 0 ? (
-          <View style={styles.photosSection}>
-            <Text style={styles.sectionLabel}>Kuvat ({sighting.photos.length})</Text>
+        {/* Photos section */}
+        <View style={styles.photosSection}>
+          <View style={styles.photosSectionHeader}>
+            <Text style={styles.sectionLabel}>
+              Kuvat {photoUrls.length > 0 ? `(${photoUrls.length})` : ''}
+            </Text>
+            <TouchableOpacity
+              onPress={handlePhotoOptions}
+              disabled={uploading}
+              accessibilityRole="button"
+              accessibilityLabel="Lisää kuva"
+              style={styles.addPhotoBtn}
+            >
+              {uploading
+                ? <ActivityIndicator size="small" color="#16a34a" />
+                : <Text style={styles.addPhotoBtnText}>+ Lisää kuva</Text>
+              }
+            </TouchableOpacity>
           </View>
-        ) : null}
+
+          {photoUrls.length > 0 ? (
+            <FlatList
+              data={photoUrls}
+              keyExtractor={(item) => item.id}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.photoList}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item.url }}
+                  style={styles.photo}
+                  accessibilityLabel="Havainnon kuva"
+                />
+              )}
+            />
+          ) : (
+            <TouchableOpacity
+              style={styles.photoPlaceholder}
+              onPress={handlePhotoOptions}
+              disabled={uploading}
+              accessibilityRole="button"
+              accessibilityLabel="Lisää ensimmäinen kuva"
+            >
+              <Text style={styles.photoPlaceholderText}>
+                Napauta lisätäksesi kuvan
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
         <TouchableOpacity
           style={[styles.deleteButton, deleting && styles.deleteButtonDisabled]}
@@ -219,12 +360,7 @@ const styles = StyleSheet.create({
   speciesName: { fontSize: 30, fontWeight: '700', color: '#111827', marginBottom: 4 },
   latinName: { fontSize: 17, fontStyle: 'italic', color: '#6b7280', marginBottom: 16 },
   badgeRow: { flexDirection: 'row', gap: 8, marginBottom: 24 },
-  badge: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
+  badge: { backgroundColor: '#f3f4f6', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4 },
   badgeGreen: { backgroundColor: '#f0fdf4' },
   badgeGray: { backgroundColor: '#f3f4f6' },
   badgeText: { fontSize: 13, color: '#374151' },
@@ -258,7 +394,23 @@ const styles = StyleSheet.create({
   notesLabel: { fontSize: 13, fontWeight: '600', color: '#9ca3af', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
   notesText: { fontSize: 15, color: '#374151', lineHeight: 22 },
   photosSection: { marginBottom: 16 },
-  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  photosSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.5 },
+  addPhotoBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#f0fdf4', borderRadius: 8, borderWidth: 1, borderColor: '#bbf7d0', minWidth: 44, alignItems: 'center' },
+  addPhotoBtnText: { fontSize: 13, fontWeight: '600', color: '#16a34a' },
+  photoList: { gap: 8 },
+  photo: { width: 160, height: 160, borderRadius: 12, backgroundColor: '#f3f4f6' },
+  photoPlaceholder: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPlaceholderText: { fontSize: 14, color: '#9ca3af' },
   deleteButton: {
     borderWidth: 1,
     borderColor: '#fca5a5',

@@ -17,13 +17,14 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { saveDraft } from '../../lib/offline-drafts'
 
-type Suggestion = { commonName: string; latinName: string; speciesCode: string }
+type Suggestion = { id: string; commonName: string; latinName: string; speciesCode: string }
 
 export default function AddScreen() {
   const { user } = useAuth()
 
   const [speciesName, setSpeciesName] = useState('')
   const [latinName, setLatinName] = useState('')
+  const [selectedSpeciesId, setSelectedSpeciesId] = useState<string | null>(null)
   const [count, setCount] = useState('1')
   const [notes, setNotes] = useState('')
   const [locationName, setLocationName] = useState('')
@@ -38,6 +39,7 @@ export default function AddScreen() {
 
   const handleSpeciesChange = (text: string) => {
     setSpeciesName(text)
+    setSelectedSpeciesId(null)
     setSuggestions([])
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
@@ -49,10 +51,19 @@ export default function AddScreen() {
   const searchSpecies = async (query: string) => {
     setSearching(true)
     try {
-      const { data, error } = await supabase.functions.invoke('ebird-species-search', {
-        body: { query },
-      })
-      if (!error && Array.isArray(data)) setSuggestions(data)
+      const { data, error } = await supabase
+        .from('species')
+        .select('id, common_name, latin_name, ebird_species_code')
+        .ilike('common_name', `%${query}%`)
+        .limit(8)
+      if (!error && data) {
+        setSuggestions(data.map(s => ({
+          id: s.id,
+          commonName: s.common_name,
+          latinName: s.latin_name,
+          speciesCode: s.ebird_species_code ?? '',
+        })))
+      }
     } catch {}
     setSearching(false)
   }
@@ -60,6 +71,7 @@ export default function AddScreen() {
   const selectSuggestion = (item: Suggestion) => {
     setSpeciesName(item.commonName)
     setLatinName(item.latinName)
+    setSelectedSpeciesId(item.id)
     setSuggestions([])
     if (debounceRef.current) clearTimeout(debounceRef.current)
   }
@@ -80,6 +92,7 @@ export default function AddScreen() {
   const resetForm = () => {
     setSpeciesName('')
     setLatinName('')
+    setSelectedSpeciesId(null)
     setCount('1')
     setNotes('')
     setLocationName('')
@@ -105,6 +118,11 @@ export default function AddScreen() {
       return
     }
 
+    if (!selectedSpeciesId) {
+      Alert.alert('Valitse laji', 'Valitse laji ehdotuslistasta ennen tallentamista.')
+      return
+    }
+
     if (!user) {
       Alert.alert('Virhe', 'Sinun on oltava kirjautuneena tallentaaksesi havainnon.')
       return
@@ -112,44 +130,9 @@ export default function AddScreen() {
 
     setSaving(true)
 
-    // Resolve or create species
-    let speciesId: string | null = null
-    const { data: existingSpecies } = await supabase
-      .from('species')
-      .select('id')
-      .ilike('common_name', trimmedSpecies)
-      .maybeSingle()
-
-    if (existingSpecies) {
-      speciesId = existingSpecies.id
-    } else {
-      const { data: newSpecies, error: speciesError } = await supabase
-        .from('species')
-        .insert({ common_name: trimmedSpecies, latin_name: trimmedLatin || trimmedSpecies })
-        .select('id')
-        .single()
-      if (speciesError) {
-        setSaving(false)
-        offerOfflineSave({
-          user_id: user.id,
-          species_name: trimmedSpecies,
-          latin_name: trimmedLatin,
-          sighted_at: new Date().toISOString(),
-          latitude: coords?.latitude ?? null,
-          longitude: coords?.longitude ?? null,
-          location_name: trimmedLocation || null,
-          count: parsedCount,
-          notes: trimmedNotes || null,
-          is_public: isPublic,
-        })
-        return
-      }
-      speciesId = newSpecies.id
-    }
-
     const { error } = await supabase.from('sightings').insert({
       user_id: user.id,
-      species_id: speciesId,
+      species_id: selectedSpeciesId,
       sighted_at: new Date().toISOString(),
       latitude: coords?.latitude ?? null,
       longitude: coords?.longitude ?? null,
@@ -254,16 +237,17 @@ export default function AddScreen() {
         )}
       </View>
 
-      <Text style={styles.label}>Latinalainen nimi</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="esim. Fringilla coelebs"
-        placeholderTextColor="#9ca3af"
-        value={latinName}
-        onChangeText={setLatinName}
-        autoCapitalize="words"
-        accessibilityLabel="Linnun latinalainen nimi"
-      />
+      {latinName ? (
+        <>
+          <Text style={styles.label}>Latinalainen nimi</Text>
+          <TextInput
+            style={[styles.input, styles.inputReadOnly]}
+            value={latinName}
+            editable={false}
+            accessibilityLabel="Linnun latinalainen nimi"
+          />
+        </>
+      ) : null}
 
       <Text style={styles.label}>Lukumäärä</Text>
       <TextInput
@@ -369,6 +353,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputNarrow: { width: 100 },
+  inputReadOnly: { backgroundColor: '#f3f4f6', color: '#6b7280' },
   inputMultiline: { height: 88, textAlignVertical: 'top' },
   suggestions: {
     backgroundColor: '#fff',
