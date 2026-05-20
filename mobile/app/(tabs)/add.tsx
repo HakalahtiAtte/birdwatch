@@ -17,6 +17,10 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { saveDraft } from '../../lib/offline-drafts'
 
+const SPECIES_SEARCH_LIMIT = 8
+const SPECIES_SEARCH_MIN_CHARS = 2
+const SEARCH_DEBOUNCE_MS = 350
+
 type Suggestion = { id: string; commonName: string; latinName: string; speciesCode: string }
 
 export default function AddScreen() {
@@ -35,36 +39,41 @@ export default function AddScreen() {
 
   const [suggestions, setSuggestions] = useState<Suggestion[]>([])
   const [searching, setSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleSpeciesChange = (text: string) => {
     setSpeciesName(text)
     setSelectedSpeciesId(null)
     setSuggestions([])
+    setSearchError(null)
 
     if (debounceRef.current) clearTimeout(debounceRef.current)
-    if (text.trim().length < 2) { setSearching(false); return }
+    if (text.trim().length < SPECIES_SEARCH_MIN_CHARS) { setSearching(false); return }
 
-    debounceRef.current = setTimeout(() => searchSpecies(text), 350)
+    debounceRef.current = setTimeout(() => searchSpecies(text), SEARCH_DEBOUNCE_MS)
   }
 
   const searchSpecies = async (query: string) => {
     setSearching(true)
+    setSearchError(null)
     try {
       const { data, error } = await supabase
         .from('species')
         .select('id, common_name, latin_name, ebird_species_code')
         .ilike('common_name', `%${query}%`)
-        .limit(8)
-      if (!error && data) {
-        setSuggestions(data.map(s => ({
-          id: s.id,
-          commonName: s.common_name,
-          latinName: s.latin_name,
-          speciesCode: s.ebird_species_code ?? '',
-        })))
-      }
-    } catch {}
+        .limit(SPECIES_SEARCH_LIMIT)
+      if (error) throw error
+      setSuggestions(data.map(s => ({
+        id: s.id,
+        commonName: s.common_name,
+        latinName: s.latin_name,
+        speciesCode: s.ebird_species_code ?? '',
+      })))
+    } catch {
+      setSearchError('Haku epäonnistui. Tarkista verkkoyhteys.')
+      setSuggestions([])
+    }
     setSearching(false)
   }
 
@@ -211,6 +220,10 @@ export default function AddScreen() {
             />
           )}
         </View>
+
+        {searchError && (
+          <Text style={styles.searchError}>{searchError}</Text>
+        )}
 
         {suggestions.length > 0 && (
           <View style={styles.suggestions}>
@@ -365,6 +378,7 @@ const styles = StyleSheet.create({
   },
   suggestion: { paddingHorizontal: 16, paddingVertical: 12 },
   suggestionBorder: { borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  searchError: { fontSize: 12, color: '#dc2626', marginTop: 4, marginBottom: 8 },
   suggestionName: { fontSize: 15, fontWeight: '600', color: '#111827' },
   suggestionLatin: { fontSize: 12, fontStyle: 'italic', color: '#6b7280', marginTop: 2 },
   locationButton: {

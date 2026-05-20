@@ -28,3 +28,9 @@ npm-debug.log*
 
 # Data files — local only
 *.csv
+
+# Supabase CLI temp files
+supabase/.temp/
+
+# Expo local config
+.expo/

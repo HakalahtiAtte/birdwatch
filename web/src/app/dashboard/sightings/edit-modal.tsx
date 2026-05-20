@@ -1,6 +1,9 @@
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
+import Image from 'next/image'
+
+const SIGNED_URL_TTL_SECONDS = 3600
 import { updateSighting, deleteSighting } from './actions'
 import { createClient } from '@/lib/supabase/client'
 import type { SightingWithSpecies } from '@/types/database'
@@ -17,15 +20,20 @@ export function EditModal({
   const [error, setError] = useState<string | null>(null)
   const [photoUrls, setPhotoUrls] = useState<string[]>([])
 
+  const cancelledRef = useRef(false)
   useEffect(() => {
+    cancelledRef.current = false
     if (!sighting.photos?.length) return
     const supabase = createClient()
     Promise.all(
       sighting.photos.map((p) =>
-        supabase.storage.from('photos').createSignedUrl(p.storage_path, 3600)
+        supabase.storage.from('photos').createSignedUrl(p.storage_path, SIGNED_URL_TTL_SECONDS)
           .then(({ data }) => data?.signedUrl ?? null)
       )
-    ).then((urls) => setPhotoUrls(urls.filter(Boolean) as string[]))
+    ).then((urls) => {
+      if (!cancelledRef.current) setPhotoUrls(urls.filter(Boolean) as string[])
+    })
+    return () => { cancelledRef.current = true }
   }, [sighting.photos])
 
   const [count, setCount] = useState(String(sighting.count))
@@ -117,57 +125,57 @@ export function EditModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-sighted-at" className="block text-sm font-medium text-gray-700 mb-1">
               Päivämäärä ja aika
             </label>
             <input
+              id="edit-sighted-at"
               type="datetime-local"
               value={sightedAt}
               onChange={(e) => setSightedAt(e.target.value)}
               className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              aria-label="Havaintoaika"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-count" className="block text-sm font-medium text-gray-700 mb-1">
               Lukumäärä
             </label>
             <input
+              id="edit-count"
               type="number"
               min={1}
               value={count}
               onChange={(e) => setCount(e.target.value)}
               className="w-24 rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              aria-label="Lintujen lukumäärä"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-location" className="block text-sm font-medium text-gray-700 mb-1">
               Paikka
             </label>
             <input
+              id="edit-location"
               type="text"
               value={locationName}
               onChange={(e) => setLocationName(e.target.value)}
               placeholder="esim. Kaivopuisto"
               className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"
-              aria-label="Paikkanimi"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="edit-notes" className="block text-sm font-medium text-gray-700 mb-1">
               Muistiinpanot
             </label>
             <textarea
+              id="edit-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Käyttäytyminen, höyhenpuku, sää..."
               className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20 resize-none"
-              aria-label="Muistiinpanot"
             />
           </div>
 
@@ -177,7 +185,6 @@ export function EditModal({
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
               className="w-4 h-4 rounded accent-green-600"
-              aria-label="Julkinen havainto"
             />
             <span className="text-sm text-gray-700">Julkinen havainto</span>
           </label>
@@ -189,12 +196,15 @@ export function EditModal({
               </p>
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {photoUrls.map((url, i) => (
-                  <img
-                    key={i}
-                    src={url}
-                    alt={`Havainnon kuva ${i + 1}`}
-                    className="w-24 h-24 rounded-xl object-cover flex-shrink-0 border border-gray-200"
-                  />
+                  <div key={i} className="relative w-24 h-24 flex-shrink-0">
+                    <Image
+                      src={url}
+                      alt={`Havainnon kuva ${i + 1}`}
+                      fill
+                      className="rounded-xl object-cover border border-gray-200"
+                      sizes="96px"
+                    />
+                  </div>
                 ))}
               </div>
             </div>

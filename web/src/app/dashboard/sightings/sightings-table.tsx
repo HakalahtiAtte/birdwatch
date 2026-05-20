@@ -49,8 +49,13 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
   }
 
   const sortIcon = (key: SortKey) => {
-    if (sortKey !== key) return <span className="text-gray-300 ml-1">↕</span>
-    return <span className="text-green-600 ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+    if (sortKey !== key) return <span className="text-gray-300 ml-1" aria-hidden="true">↕</span>
+    return <span className="text-green-600 ml-1" aria-hidden="true">{sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  const getAriaSort = (key: SortKey): 'ascending' | 'descending' | 'none' => {
+    if (sortKey !== key) return 'none'
+    return sortDir === 'asc' ? 'ascending' : 'descending'
   }
 
   return (
@@ -84,14 +89,14 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <Th onClick={() => toggleSort('common_name')}>
+                <Th onClick={() => toggleSort('common_name')} ariaSort={getAriaSort('common_name')}>
                   Lintu {sortIcon('common_name')}
                 </Th>
-                <Th onClick={() => toggleSort('sighted_at')}>
+                <Th onClick={() => toggleSort('sighted_at')} ariaSort={getAriaSort('sighted_at')}>
                   Päivämäärä {sortIcon('sighted_at')}
                 </Th>
                 <Th>Paikka</Th>
-                <Th onClick={() => toggleSort('count')}>
+                <Th onClick={() => toggleSort('count')} ariaSort={getAriaSort('count')}>
                   Lkm {sortIcon('count')}
                 </Th>
                 <Th>Julkinen</Th>
@@ -159,18 +164,28 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
 function Th({
   children,
   onClick,
+  ariaSort,
 }: {
   children: React.ReactNode
   onClick?: () => void
+  ariaSort?: 'ascending' | 'descending' | 'none'
 }) {
   return (
     <th
-      className={`px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide ${
-        onClick ? 'cursor-pointer select-none hover:text-gray-700' : ''
-      }`}
-      onClick={onClick}
+      className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
+      aria-sort={ariaSort}
     >
-      {children}
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex items-center hover:text-gray-700 select-none"
+        >
+          {children}
+        </button>
+      ) : (
+        children
+      )}
     </th>
   )
 }

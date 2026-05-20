@@ -34,7 +34,7 @@ export function DashboardShell({
       {/* Mobile header */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-4 h-14">
         <span className="font-bold text-gray-900 flex items-center gap-2">
-          <span>🐦</span> Birdwatch
+          <span aria-hidden="true">🐦</span> Birdwatch
         </span>
         <button
           onClick={() => setMobileOpen((o) => !o)}
@@ -68,7 +68,7 @@ export function DashboardShell({
                     : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <span>{item.icon}</span>
+                <span aria-hidden="true">{item.icon}</span>
                 {item.label}
               </Link>
             ))}
@@ -88,7 +88,7 @@ export function DashboardShell({
       <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 w-60 bg-white border-r border-gray-200 z-10">
         <div className="px-6 h-16 flex items-center border-b border-gray-200">
           <span className="font-bold text-gray-900 flex items-center gap-2">
-            <span>🐦</span> Birdwatch
+            <span aria-hidden="true">🐦</span> Birdwatch
           </span>
         </div>
 
@@ -103,7 +103,7 @@ export function DashboardShell({
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
-              <span className="text-base">{item.icon}</span>
+              <span className="text-base" aria-hidden="true">{item.icon}</span>
               {item.label}
             </Link>
           ))}

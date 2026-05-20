@@ -1,12 +1,23 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimitLogin, rateLimitSignup } from '@/lib/rate-limit'
 import { redirect } from 'next/navigation'
+
+async function getIp(): Promise<string> {
+  const headerStore = await headers()
+  return headerStore.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+}
 
 export async function login(
   _prevState: string | null,
   formData: FormData
 ): Promise<string | null> {
+  const ip = await getIp()
+  const { allowed } = await rateLimitLogin(ip)
+  if (!allowed) return 'Liian monta kirjautumisyritystä. Yritä uudelleen 15 minuutin kuluttua.'
+
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
 
@@ -24,6 +35,10 @@ export async function signup(
   _prevState: string | null,
   formData: FormData
 ): Promise<string | null> {
+  const ip = await getIp()
+  const { allowed } = await rateLimitSignup(ip)
+  if (!allowed) return 'Liian monta rekisteröitymisyritystä. Yritä uudelleen tunnin kuluttua.'
+
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string

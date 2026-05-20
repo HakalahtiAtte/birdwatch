@@ -4,11 +4,15 @@ import { useState, useTransition } from 'react'
 import { addAlert, deleteAlert } from './actions'
 import type { SpeciesAlert, Species } from '@/types/database'
 
+const ALERT_RADIUS_MIN = 1
+const ALERT_RADIUS_MAX = 500
+const DEFAULT_RADIUS = '25'
+
 type AlertWithSpecies = SpeciesAlert & { species: Species | null }
 
 export function AlertsManager({ alerts }: { alerts: AlertWithSpecies[] }) {
   const [speciesName, setSpeciesName] = useState('')
-  const [radius, setRadius] = useState('25')
+  const [radius, setRadius] = useState(DEFAULT_RADIUS)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -16,13 +20,13 @@ export function AlertsManager({ alerts }: { alerts: AlertWithSpecies[] }) {
     const name = speciesName.trim()
     const r = parseInt(radius, 10)
     if (!name) { setError('Syötä lajin nimi.'); return }
-    if (isNaN(r) || r < 1 || r > 500) { setError('Säteen on oltava 1–500 km.'); return }
+    if (isNaN(r) || r < ALERT_RADIUS_MIN || r > ALERT_RADIUS_MAX) { setError(`Säteen on oltava ${ALERT_RADIUS_MIN}–${ALERT_RADIUS_MAX} km.`); return }
     setError(null)
     startTransition(async () => {
       const result = await addAlert(name, r)
       if (result) { setError(result); return }
       setSpeciesName('')
-      setRadius('25')
+      setRadius(DEFAULT_RADIUS)
     })
   }
 
@@ -58,8 +62,8 @@ export function AlertsManager({ alerts }: { alerts: AlertWithSpecies[] }) {
           <div className="flex items-center gap-2">
             <input
               type="number"
-              min={1}
-              max={500}
+              min={ALERT_RADIUS_MIN}
+              max={ALERT_RADIUS_MAX}
               value={radius}
               onChange={(e) => setRadius(e.target.value)}
               className="w-20 rounded-xl border border-gray-300 px-3 py-2.5 text-sm text-gray-900 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-500/20"

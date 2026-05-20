@@ -13,6 +13,9 @@ export async function updateSighting(
     sighted_at: string
   }
 ): Promise<string | null> {
+  if (!Number.isInteger(data.count) || data.count < 1) return 'Lukumäärän on oltava vähintään 1.'
+  if (!data.sighted_at || isNaN(Date.parse(data.sighted_at))) return 'Virheellinen päivämäärä.'
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return 'Not authenticated.'

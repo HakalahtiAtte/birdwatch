@@ -19,13 +19,14 @@ export async function deleteAccount(): Promise<string | null> {
 
   // Delete the auth user itself using the service role key (server-only)
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (serviceRoleKey) {
-    const admin = createAdminClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      serviceRoleKey
-    )
-    await admin.auth.admin.deleteUser(user.id)
-  }
+  if (!serviceRoleKey) return 'Palvelin ei ole määritetty tilin poistamiseen. Ota yhteyttä tukeen.'
+
+  const admin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    serviceRoleKey
+  )
+  const { error: deleteAuthError } = await admin.auth.admin.deleteUser(user.id)
+  if (deleteAuthError) return 'Tilin poistaminen epäonnistui. Yritä uudelleen.'
 
   await supabase.auth.signOut()
   redirect('/login?notice=Tilisi+on+poistettu.')
