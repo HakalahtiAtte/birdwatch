@@ -2,9 +2,11 @@ import { Stack, useRouter, useSegments } from 'expo-router'
 import { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { AuthProvider, useAuth } from '../context/AuthContext'
+import { usePushToken } from '../hooks/usePushToken'
 
 function RootLayoutNav() {
   const { session, loading } = useAuth()
+  usePushToken()
   const segments = useSegments()
   const router = useRouter()
 

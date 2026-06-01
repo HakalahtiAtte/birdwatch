@@ -14,6 +14,7 @@ export interface Database {
           email_notifications: boolean
           push_notifications: boolean
           notification_filters: Json
+          push_token: string | null
           updated_at: string
         }
         Insert: Partial<Database['public']['Tables']['user_preferences']['Row']>
