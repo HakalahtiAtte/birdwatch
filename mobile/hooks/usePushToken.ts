@@ -11,9 +11,9 @@ export function usePushToken() {
   useEffect(() => {
     if (!user) return
 
-    registerForPushNotificationsAsync().then((token) => {
+    registerForPushNotificationsAsync().then(async (token) => {
       if (!token) return
-      supabase
+      await supabase
         .from('user_preferences')
         .upsert({ user_id: user.id, push_token: token }, { onConflict: 'user_id' })
     })
