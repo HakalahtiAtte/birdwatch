@@ -112,6 +112,25 @@ before deploying:
 Single Supabase project shared by both apps. Database types are defined once in `shared/types/database.ts`
 and should be imported from there in both apps.
 
+#### New table template (required every time)
+From May 30, 2026, new tables are not exposed to the Data API by default. Every `CREATE TABLE` must
+be followed by RLS and an explicit GRANT in the same SQL block:
+
+```sql
+CREATE TABLE public.new_table (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users NOT NULL,
+  -- columns...
+);
+
+ALTER TABLE public.new_table ENABLE ROW LEVEL SECURITY;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.new_table TO authenticated;
+```
+
+Use `GRANT SELECT ON public.new_table TO anon` as well only for read-only reference tables (e.g. `species`).
+RLS policies still control row-level access — the GRANT is just the door.
+
 ### Mobile (Expo + expo-router)
 - **Routing**: File-based via expo-router v6. Route groups: `app/(auth)/` and `app/(tabs)/`.
 - **Auth flow**: `context/AuthContext.tsx` exposes `useAuth()` hook. Root `_layout.tsx` wraps everything
