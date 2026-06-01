@@ -28,6 +28,14 @@ npm-debug.log*
 
 # Data files — local only
 *.csv
+*.xlsx
+
+# Firebase — contains project config, not secrets, but no need to commit
+mobile/google-services.json
+
+# Scripts dependencies (root-level, one-time use)
+package.json
+package-lock.json
 
 # Supabase CLI temp files
 supabase/.temp/
