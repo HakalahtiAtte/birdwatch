@@ -11,6 +11,7 @@ import { useState, useCallback } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { Sighting, Species } from '../../../shared/types/database'
+import { getSpeciesName } from '../../utils/species'
 
 type SightingRow = Pick<
   Sighting,
@@ -95,7 +96,10 @@ export default function SpeciesHistoryScreen() {
         contentContainerStyle={styles.content}
         ListHeaderComponent={
           <View style={styles.heroArea}>
-            <Text style={styles.speciesName}>{species.common_name}</Text>
+            <Text style={styles.speciesName}>{getSpeciesName(species)}</Text>
+            {species.finnish_name && (
+              <Text style={styles.latinName}>{species.common_name}</Text>
+            )}
             {species.latin_name ? (
               <Text style={styles.latinName}>{species.latin_name}</Text>
             ) : null}

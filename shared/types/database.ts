@@ -25,6 +25,7 @@ export interface Database {
           id: string
           common_name: string
           latin_name: string
+          finnish_name: string | null
           family: string | null
           order: string | null
           ebird_species_code: string | null

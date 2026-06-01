@@ -21,7 +21,7 @@ const SPECIES_SEARCH_LIMIT = 8
 const SPECIES_SEARCH_MIN_CHARS = 2
 const SEARCH_DEBOUNCE_MS = 350
 
-type Suggestion = { id: string; commonName: string; latinName: string; speciesCode: string }
+type Suggestion = { id: string; commonName: string; finnishName: string | null; latinName: string; speciesCode: string }
 
 export default function AddScreen() {
   const { user } = useAuth()
@@ -60,13 +60,14 @@ export default function AddScreen() {
     try {
       const { data, error } = await supabase
         .from('species')
-        .select('id, common_name, latin_name, ebird_species_code')
-        .ilike('common_name', `%${query}%`)
+        .select('id, common_name, finnish_name, latin_name, ebird_species_code')
+        .or(`common_name.ilike.%${query}%,finnish_name.ilike.%${query}%`)
         .limit(SPECIES_SEARCH_LIMIT)
       if (error) throw error
       setSuggestions(data.map(s => ({
         id: s.id,
         commonName: s.common_name,
+        finnishName: s.finnish_name ?? null,
         latinName: s.latin_name,
         speciesCode: s.ebird_species_code ?? '',
       })))
@@ -78,7 +79,7 @@ export default function AddScreen() {
   }
 
   const selectSuggestion = (item: Suggestion) => {
-    setSpeciesName(item.commonName)
+    setSpeciesName(item.finnishName ?? item.commonName)
     setLatinName(item.latinName)
     setSelectedSpeciesId(item.id)
     setSuggestions([])
@@ -239,9 +240,9 @@ export default function AddScreen() {
                   ]}
                   onPress={() => selectSuggestion(item)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Select ${item.commonName}`}
+                  accessibilityLabel={`Valitse ${item.finnishName ?? item.commonName}`}
                 >
-                  <Text style={styles.suggestionName}>{item.commonName}</Text>
+                  <Text style={styles.suggestionName}>{item.finnishName ?? item.commonName}</Text>
                   <Text style={styles.suggestionLatin}>{item.latinName}</Text>
                 </TouchableOpacity>
               )}

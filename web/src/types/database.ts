@@ -14,6 +14,7 @@ export interface Database {
           email_notifications: boolean
           push_notifications: boolean
           notification_filters: Json
+          push_token: string | null
           updated_at: string
         }
         Insert: Partial<Database['public']['Tables']['user_preferences']['Row']>
@@ -24,6 +25,7 @@ export interface Database {
           id: string
           common_name: string
           latin_name: string
+          finnish_name: string | null
           family: string | null
           order: string | null
           ebird_species_code: string | null

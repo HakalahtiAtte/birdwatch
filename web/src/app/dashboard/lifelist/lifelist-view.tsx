@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import type { LifeList, Species } from '@/types/database'
+import { getSpeciesName } from '@/utils/species'
 
 type LifeListEntry = LifeList & { species: Species | null }
 
@@ -13,6 +14,7 @@ export function LifeListView({ entries }: { entries: LifeListEntry[] }) {
     if (!q) return entries
     return entries.filter((e) =>
       e.species?.common_name?.toLowerCase().includes(q) ||
+      e.species?.finnish_name?.toLowerCase().includes(q) ||
       e.species?.latin_name?.toLowerCase().includes(q) ||
       e.species?.family?.toLowerCase().includes(q)
     )
@@ -57,7 +59,7 @@ export function LifeListView({ entries }: { entries: LifeListEntry[] }) {
             >
               <div className="min-w-0">
                 <p className="font-medium text-gray-900 truncate">
-                  {entry.species?.common_name ?? '—'}
+                  {getSpeciesName(entry.species)}
                 </p>
                 <div className="flex items-center gap-2 mt-0.5">
                   {entry.species?.latin_name && (

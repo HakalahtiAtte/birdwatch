@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { SightingWithSpecies } from '@/types/database'
 import { EditModal } from './edit-modal'
+import { getSpeciesName } from '@/utils/species'
 
 type SortKey = 'sighted_at' | 'common_name' | 'count'
 type SortDir = 'asc' | 'desc'
@@ -20,6 +21,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
         if (!q) return true
         return (
           s.species?.common_name?.toLowerCase().includes(q) ||
+          s.species?.finnish_name?.toLowerCase().includes(q) ||
           s.species?.latin_name?.toLowerCase().includes(q) ||
           s.location_name?.toLowerCase().includes(q)
         )
@@ -118,7 +120,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
                   >
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900">
-                        {s.species?.common_name ?? '—'}
+                        {getSpeciesName(s.species)}
                       </p>
                       {s.species?.latin_name && (
                         <p className="text-xs text-gray-400 italic mt-0.5">
@@ -145,7 +147,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
                       <button
                         onClick={() => setEditing(s)}
                         className="text-xs font-medium text-green-600 hover:text-green-800 hover:underline"
-                        aria-label={`Muokkaa havaintoa ${s.species?.common_name ?? ''}`}
+                        aria-label={`Muokkaa havaintoa ${getSpeciesName(s.species)}`}
                       >
                         Muokkaa
                       </button>

@@ -13,6 +13,7 @@ import { useFocusEffect, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import type { LifeList, Species } from '../../../shared/types/database'
+import { getSpeciesName } from '../../utils/species'
 
 type LifeListEntry = LifeList & { species: Species | null }
 
@@ -86,6 +87,7 @@ export default function LifeListScreen() {
     ? entries.filter(
         (e) =>
           e.species?.common_name?.toLowerCase().includes(q) ||
+          e.species?.finnish_name?.toLowerCase().includes(q) ||
           e.species?.latin_name?.toLowerCase().includes(q)
       )
     : entries
@@ -138,12 +140,12 @@ export default function LifeListScreen() {
             style={styles.row}
             onPress={() => router.push(`/species/${item.species_id}`)}
             accessibilityRole="button"
-            accessibilityLabel={`Näytä ${item.species?.common_name ?? 'tuntematon lintu'} havainnot`}
+            accessibilityLabel={`Näytä ${getSpeciesName(item.species)} havainnot`}
           >
             <Text style={styles.rowNumber}>{index + 1}</Text>
             <View style={styles.rowMiddle}>
               <Text style={styles.speciesName}>
-                {item.species?.common_name ?? 'Tuntematon lintu'}
+                {getSpeciesName(item.species)}
               </Text>
               {item.species?.latin_name ? (
                 <Text style={styles.latinName}>{item.species.latin_name}</Text>

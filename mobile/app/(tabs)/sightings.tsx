@@ -16,6 +16,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { getDraftCount, syncDrafts } from '../../lib/offline-drafts'
 import type { SightingWithSpecies } from '../../../shared/types/database'
+import { getSpeciesName } from '../../utils/species'
 
 type ViewMode = 'time' | 'species'
 
@@ -89,6 +90,7 @@ export default function SightingsScreen() {
     return sightings.filter(
       (s) =>
         s.species?.common_name?.toLowerCase().includes(q) ||
+        s.species?.finnish_name?.toLowerCase().includes(q) ||
         s.species?.latin_name?.toLowerCase().includes(q) ||
         s.location_name?.toLowerCase().includes(q) ||
         s.notes?.toLowerCase().includes(q)
@@ -101,7 +103,7 @@ export default function SightingsScreen() {
       const key = s.species_id ?? 'unknown'
       if (!map.has(key)) {
         map.set(key, {
-          title: s.species?.common_name ?? 'Tuntematon lintu',
+          title: getSpeciesName(s.species),
           latinName: s.species?.latin_name ?? null,
           speciesId: s.species_id,
           data: [],
