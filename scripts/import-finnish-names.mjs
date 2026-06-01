@@ -14,9 +14,11 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import * as XLSX from 'xlsx'
-import { readFileSync } from 'fs'
+import { createRequire } from 'module'
 import { resolve } from 'path'
+
+const require = createRequire(import.meta.url)
+const XLSX = require('xlsx')
 
 const filePath = process.argv[2]
 if (!filePath) {
@@ -50,14 +52,16 @@ console.log(`Parsed ${rows.length} rows from Excel`)
 const finnishMap = new Map()
 let skipped = 0
 
+// Find the scientific name column (varies by IOC version: "IOC_15.2", "IOC_14.1", etc.)
+const sciCol = Object.keys(rows[0] || {}).find((k) => /^IOC_/i.test(k)) || 'IOC_15.2'
+console.log('Scientific name column:', sciCol)
+
 for (const row of rows) {
-  const genus = String(row['Genus'] || row['genus'] || '').trim()
-  const species = String(row['Species'] || row['species'] || '').trim()
+  const scientificName = String(row[sciCol] || '').trim()
   const finnish = String(row['Finnish'] || row['finnish'] || row['Suomi'] || '').trim()
 
-  if (!genus || !species || !finnish) { skipped++; continue }
+  if (!scientificName || !finnish) { skipped++; continue }
 
-  const scientificName = `${genus} ${species}`
   finnishMap.set(scientificName.toLowerCase(), { scientificName, finnish })
 }
 
@@ -109,20 +113,25 @@ if (updates.length === 0) {
   process.exit(0)
 }
 
-// Update Supabase in batches of 500
-const UPDATE_BATCH = 500
+// Update Supabase — run 50 updates concurrently to keep it fast
+const CONCURRENCY = 50
 let updated = 0
+let failed = 0
 
-for (let i = 0; i < updates.length; i += UPDATE_BATCH) {
-  const batch = updates.slice(i, i + UPDATE_BATCH)
-  const { error } = await supabase.from('species').upsert(batch, { onConflict: 'id' })
-
-  if (error) {
-    console.error(`Batch ${Math.floor(i / UPDATE_BATCH) + 1} failed:`, error.message)
-  } else {
-    updated += batch.length
-    process.stdout.write(`\rUpdated ${updated}/${updates.length}...`)
+for (let i = 0; i < updates.length; i += CONCURRENCY) {
+  const batch = updates.slice(i, i + CONCURRENCY)
+  const results = await Promise.all(
+    batch.map(({ id, finnish_name }) =>
+      supabase.from('species').update({ finnish_name }).eq('id', id)
+    )
+  )
+  for (const { error } of results) {
+    if (error) failed++
+    else updated++
   }
+  process.stdout.write(`\rUpdated ${updated}/${updates.length}...`)
 }
+
+if (failed > 0) console.log(`\n${failed} updates failed.`)
 
 console.log(`\nDone. ${updated} Finnish names imported.`)
