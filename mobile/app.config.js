@@ -1,7 +1,7 @@
 const config = {
   expo: {
-    name: 'Birdwatch',
-    slug: 'birdwatch',
+    name: 'Siipi',
+    slug: 'siipi',
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/icon.png',
@@ -14,16 +14,16 @@ const config = {
     },
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'fi.birdwatch.app',
+      bundleIdentifier: 'fi.siipi.app',
       infoPlist: {
         NSLocationWhenInUseUsageDescription:
-          'Birdwatch käyttää sijaintiasi havainnon tallentamiseen.',
+          'Siipi käyttää sijaintiasi havainnon tallentamiseen.',
         NSLocationAlwaysAndWhenInUseUsageDescription:
-          'Birdwatch käyttää sijaintiasi havainnon tallentamiseen.',
+          'Siipi käyttää sijaintiasi havainnon tallentamiseen.',
         NSCameraUsageDescription:
-          'Birdwatch käyttää kameraasi havaintokuvien ottamiseen.',
+          'Siipi käyttää kameraasi havaintokuvien ottamiseen.',
         NSPhotoLibraryUsageDescription:
-          'Birdwatch käyttää kuvakirjastoasi havaintokuvien valitsemiseen.',
+          'Siipi käyttää kuvakirjastoasi havaintokuvien valitsemiseen.',
         ITSAppUsesNonExemptEncryption: false,
       },
     },
@@ -34,7 +34,7 @@ const config = {
       },
       edgeToEdgeEnabled: true,
       predictiveBackGestureEnabled: false,
-      package: 'fi.birdwatch.app',
+      package: 'fi.siipi.app',
       googleServicesFile: './google-services.json',
       config: {
         googleMaps: {
@@ -48,7 +48,7 @@ const config = {
         'android.permission.READ_MEDIA_IMAGES',
       ],
     },
-    scheme: 'birdwatch',
+    scheme: 'siipi',
     web: {
       favicon: './assets/favicon.png',
       bundler: 'metro',
@@ -59,16 +59,16 @@ const config = {
         'expo-location',
         {
           locationWhenInUsePermission:
-            'Birdwatch käyttää sijaintiasi havainnon tallentamiseen.',
+            'Siipi käyttää sijaintiasi havainnon tallentamiseen.',
         },
       ],
       [
         'expo-image-picker',
         {
           photosPermission:
-            'Birdwatch käyttää kuvakirjastoasi havaintokuvien valitsemiseen.',
+            'Siipi käyttää kuvakirjastoasi havaintokuvien valitsemiseen.',
           cameraPermission:
-            'Birdwatch käyttää kameraasi havaintokuvien ottamiseen.',
+            'Siipi käyttää kameraasi havaintokuvien ottamiseen.',
         },
       ],
       [

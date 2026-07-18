@@ -34,7 +34,7 @@ export function DashboardShell({
       {/* Mobile header */}
       <header className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 flex items-center justify-between px-4 h-14">
         <span className="font-bold text-gray-900 flex items-center gap-2">
-          <span aria-hidden="true">🐦</span> Birdwatch
+          <span aria-hidden="true">🐦</span> Siipi
         </span>
         <button
           onClick={() => setMobileOpen((o) => !o)}
@@ -88,7 +88,7 @@ export function DashboardShell({
       <aside className="hidden md:flex flex-col fixed top-0 left-0 bottom-0 w-60 bg-white border-r border-gray-200 z-10">
         <div className="px-6 h-16 flex items-center border-b border-gray-200">
           <span className="font-bold text-gray-900 flex items-center gap-2">
-            <span aria-hidden="true">🐦</span> Birdwatch
+            <span aria-hidden="true">🐦</span> Siipi
           </span>
         </div>
 

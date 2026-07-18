@@ -76,7 +76,7 @@ export function SightingsTable({ sightings }: { sightings: SightingWithSpecies[]
         />
         <a
           href="/api/export/sightings"
-          download="birdwatch-sightings.csv"
+          download="siipi-havainnot.csv"
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           aria-label="Vie havainnot CSV-tiedostona"
         >

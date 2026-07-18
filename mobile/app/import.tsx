@@ -9,7 +9,7 @@ import {
 } from 'react-native'
 import { useState } from 'react'
 import * as DocumentPicker from 'expo-document-picker'
-import * as FileSystem from 'expo-file-system'
+import * as FileSystem from 'expo-file-system/legacy'
 import { router } from 'expo-router'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'

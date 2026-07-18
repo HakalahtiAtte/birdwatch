@@ -37,7 +37,7 @@ export default function LoginScreen() {
     >
       <View style={styles.inner}>
         <Text style={styles.logo}>🐦</Text>
-        <Text style={styles.title}>Birdwatch</Text>
+        <Text style={styles.title}>Siipi</Text>
         <Text style={styles.subtitle}>Kirjaudu tilillesi</Text>
 
         <TextInput
