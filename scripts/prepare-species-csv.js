@@ -1,3 +1,6 @@
+// One-time script: converts the eBird/Clements checklist CSV into a Supabase-importable format.
+// Input:  eBird-Clements_v2025-integrated-checklist-October-2025.csv (download from https://www.birds.cornell.edu/clementschecklist/download/)
+// Output: species-import.csv  (import via Supabase dashboard → Table editor → species → Import data)
 const fs = require('fs')
 const path = require('path')
 

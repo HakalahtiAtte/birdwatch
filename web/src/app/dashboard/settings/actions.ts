@@ -6,8 +6,19 @@ import { redirect } from 'next/navigation'
 
 export async function deleteAccount(): Promise<string | null> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return 'Not authenticated.'
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return 'Not authenticated.'
+
+  // Delete storage files before removing photo rows (FK order: photos first)
+  const { data: photos } = await supabase
+    .from('photos')
+    .select('storage_path')
+    .eq('user_id', user.id)
+
+  if (photos && photos.length > 0) {
+    const paths = photos.map((p) => p.storage_path)
+    await supabase.storage.from('photos').remove(paths)
+  }
 
   // Delete all user data — order matters for FK constraints
   const tables = ['photos', 'life_list', 'species_alerts', 'user_preferences', 'sightings'] as const

@@ -59,7 +59,7 @@ before deploying:
 
 ## Deployment
 
-- **Web**: Vercel — https://birdwatch-ten.vercel.app
+- **Web**: Vercel — https://birdwatch-ten.vercel.app (rename pending in Vercel dashboard)
 - **Mobile Android**: EAS build (dev client APK), installed on device. Run builds from `mobile/`.
 - **Mobile iOS**: Pending Apple Developer account ($99/year)
 - **Backend**: Supabase project `sfmovzodaagmwhyfapmq` (eu-west-3)
@@ -100,11 +100,8 @@ before deploying:
 
 ## What is NOT done yet
 
-1. **Android build failing** — EAS errored on "Install dependencies". Check logs at expo.dev.
-2. **iOS build** — needs Apple Developer account ($99/year). Once paid: `eas build --profile development --platform ios` from `mobile/`.
-3. **Push notifications** — `species_alerts` table and `on_sighting_insert_notify` trigger exist, but the edge function and Expo push token registration are not implemented.
-4. **Finnish species names** — species table has English names only. Plan: add `finnish_name` column, import BirdLife Finland taxonomy, show Finnish when locale is `fi`.
-5. **Email confirmation** — currently OFF in Supabase Auth (dev convenience). Must be turned ON with custom SMTP before any public launch.
+1. **iOS build** — needs Apple Developer account ($99/year). Once paid: `eas build --profile development --platform ios` from `mobile/`.
+2. **Webhook secret** — the `species-alert-notify` edge function reads `WEBHOOK_SECRET` from env. Set this in Supabase edge function secrets and configure the matching `Authorization: Bearer <secret>` header in the Supabase database webhook settings.
 
 ## Architecture
 

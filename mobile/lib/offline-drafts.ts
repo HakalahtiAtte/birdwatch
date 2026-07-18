@@ -5,7 +5,6 @@ const DRAFTS_KEY = 'offline_sighting_drafts'
 
 export type DraftSighting = {
   id: string
-  user_id: string
   species_name: string
   latin_name: string
   sighted_at: string
@@ -18,9 +17,18 @@ export type DraftSighting = {
   saved_at: string
 }
 
+function parseDrafts(raw: string | null): DraftSighting[] {
+  if (!raw) return []
+  try {
+    return JSON.parse(raw) as DraftSighting[]
+  } catch {
+    return []
+  }
+}
+
 export async function saveDraft(draft: Omit<DraftSighting, 'id' | 'saved_at'>): Promise<void> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY)
-  const drafts: DraftSighting[] = raw ? JSON.parse(raw) : []
+  const drafts = parseDrafts(raw)
   drafts.push({
     ...draft,
     id: `draft_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -31,15 +39,12 @@ export async function saveDraft(draft: Omit<DraftSighting, 'id' | 'saved_at'>): 
 
 export async function getDraftCount(): Promise<number> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY)
-  if (!raw) return 0
-  return (JSON.parse(raw) as DraftSighting[]).length
+  return parseDrafts(raw).length
 }
 
 export async function syncDrafts(userId: string): Promise<{ synced: number; failed: number }> {
   const raw = await AsyncStorage.getItem(DRAFTS_KEY)
-  if (!raw) return { synced: 0, failed: 0 }
-
-  const drafts: DraftSighting[] = JSON.parse(raw)
+  const drafts = parseDrafts(raw)
   if (drafts.length === 0) return { synced: 0, failed: 0 }
 
   let synced = 0
@@ -47,28 +52,15 @@ export async function syncDrafts(userId: string): Promise<{ synced: number; fail
   const remaining: DraftSighting[] = []
 
   for (const draft of drafts) {
-    // Resolve or create species
-    let speciesId: string | null = null
     const { data: existing } = await supabase
       .from('species')
       .select('id')
       .ilike('common_name', draft.species_name)
       .maybeSingle()
 
-    if (existing) {
-      speciesId = existing.id
-    } else {
-      const { data: created } = await supabase
-        .from('species')
-        .insert({ common_name: draft.species_name, latin_name: draft.latin_name || draft.species_name })
-        .select('id')
-        .single()
-      if (created) speciesId = created.id
-    }
-
     const { error } = await supabase.from('sightings').insert({
       user_id: userId,
-      species_id: speciesId,
+      species_id: existing?.id ?? null,
       sighted_at: draft.sighted_at,
       latitude: draft.latitude,
       longitude: draft.longitude,
